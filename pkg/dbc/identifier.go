@@ -38,7 +38,7 @@ func (id Identifier) Validate() (err error) {
 
 func (id Identifier) FirstCharUpper() (Identifier, bool) {
 	firstChar := rune(id[0])
-	if identifiers.IsAlphaChar(firstChar) && !identifiers.IsUpperAlphaChar(firstChar) {
+	if identifiers.IsLowerAlphaChar(firstChar) {
 		conv := []byte(id)
 		conv[0] = byte(unicode.ToUpper(firstChar))
 		return Identifier(conv), true
