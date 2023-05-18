@@ -14,14 +14,14 @@ type CompileResult struct {
 	Warnings []error
 }
 
-func Compile(sourceFile string, data []byte) (result *CompileResult, err error) {
+func Compile(sourceFile, packageName string, data []byte) (result *CompileResult, err error) {
 	p := dbc.NewParser(sourceFile, data)
 	if err := p.Parse(); err != nil {
 		return nil, fmt.Errorf("failed to parse DBC source file: %w", err)
 	}
 	defs := p.Defs()
 	c := &compiler{
-		db:   &descriptor.Database{SourceFile: sourceFile},
+		db:   &descriptor.Database{SourceFile: sourceFile, PackageName: packageName},
 		defs: defs,
 	}
 	c.collectDescriptors()

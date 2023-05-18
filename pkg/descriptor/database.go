@@ -12,6 +12,8 @@ type Database struct {
 	// Example:
 	//  github.com/einride/can-databases/dbc/j1939.dbc
 	SourceFile string
+	// Package name of the generated .go file for this database
+	PackageName string
 	// Version of the database.
 	Version string
 	// Messages in the database.

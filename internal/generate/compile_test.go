@@ -14,9 +14,11 @@ func TestCompile_ExampleDBC(t *testing.T) {
 	finish := runTestInDir(t, "../..")
 	defer finish()
 	const exampleDBCFile = "testdata/dbc/example/example.dbc"
+	const examplePackageName = "example"
 	exampleDatabase := &descriptor.Database{
-		SourceFile: exampleDBCFile,
-		Version:    "",
+		SourceFile:  exampleDBCFile,
+		PackageName: examplePackageName,
+		Version:     "",
 		Nodes: []*descriptor.Node{
 			{
 				Name: "DBG",
@@ -297,7 +299,7 @@ func TestCompile_ExampleDBC(t *testing.T) {
 	}
 	input, err := os.ReadFile(exampleDBCFile)
 	assert.NilError(t, err)
-	result, err := Compile(exampleDBCFile, input)
+	result, err := Compile(exampleDBCFile, examplePackageName, input)
 	if err != nil {
 		t.Fatal(err)
 	}

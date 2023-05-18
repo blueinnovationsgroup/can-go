@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -61,6 +62,10 @@ func generateCommand(app *kingpin.Application) {
 	filterFile := command.
 		Flag("filter-file", "path to file containing messages to include, one per line").
 		File()
+	packageNameOpt := command.
+		Flag("package-name", "package name of generated file(s)").
+		Short('p').
+		String()
 
 	command.Action(func(c *kingpin.ParseContext) error {
 		var signalFilters SignalFilters
@@ -85,7 +90,7 @@ func generateCommand(app *kingpin.Application) {
 				fmt.Println("Failed to parse message file", scan.Err())
 			}
 		}
-		if (signalFilters != nil) {
+		if signalFilters != nil {
 			fmt.Println("Using filters (case-insensitive):")
 			for msg, sigs := range signalFilters {
 				fmt.Printf("\t%s:\n", msg)
@@ -122,7 +127,19 @@ func generateCommand(app *kingpin.Application) {
 			}
 			outputFile := relPath + ".go"
 			outputPath := filepath.Join(*outputDir, outputFile)
-			return genGo(p, outputPath, signalFilters)
+
+			var packageName string
+			if *packageNameOpt != "" {
+				packageName = *packageNameOpt
+			} else {
+				packageName = strings.TrimSuffix(path.Base(p), path.Ext(p)) + "can"
+				// Remove illegal characters from package name
+				packageName = strings.ReplaceAll(packageName, ".", "")
+				packageName = strings.ReplaceAll(packageName, "-", "")
+				packageName = strings.ReplaceAll(packageName, "_", "")
+			}
+
+			return genGo(p, outputPath, packageName, signalFilters)
 		})
 	})
 }
@@ -132,7 +149,7 @@ func boolPtr(b bool) *bool {
 func parseFilter(entry string, filters SignalFilters) error {
 	pieces := strings.Split(entry, ":")
 	if len(pieces) > 2 {
-		return errors.New(fmt.Sprintf("Invalid filter entry: '%s', format is <message>[:<signal>]", entry))
+		return fmt.Errorf("invalid filter entry: '%s', format is <message>[:<signal>]", entry)
 	}
 	message := strings.ToLower(pieces[0])
 	signalSet, ok := filters[message]
@@ -218,7 +235,7 @@ func analyzers() []*analysis.Analyzer {
 	}
 }
 
-func genGo(inputFile, outputFile string, filters SignalFilters) error {
+func genGo(inputFile, outputFile, packageName string, filters SignalFilters) error {
 	if err := os.MkdirAll(filepath.Dir(outputFile), 0o755); err != nil {
 		return err
 	}
@@ -226,7 +243,7 @@ func genGo(inputFile, outputFile string, filters SignalFilters) error {
 	if err != nil {
 		return err
 	}
-	result, err := generate.Compile(inputFile, input)
+	result, err := generate.Compile(inputFile, packageName, input)
 	if err != nil {
 		return err
 	}
@@ -234,7 +251,7 @@ func genGo(inputFile, outputFile string, filters SignalFilters) error {
 		return warning
 	}
 
-	if (filters != nil) {
+	if filters != nil {
 		skips := make(map[string][]string)
 		// Filter in-place for only the messages and signals matching the filter
 		allMessages := result.Database.Messages

@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"go/format"
 	"go/types"
-	"path"
 	"regexp"
-	"strings"
 
 	"github.com/blueinnovationsgroup/can-go/pkg/descriptor"
 	"github.com/shurcooL/go-goon"
@@ -79,15 +77,10 @@ func Database(d *descriptor.Database) ([]byte, error) {
 }
 
 func Package(f *File, d *descriptor.Database) {
-	packageName := strings.TrimSuffix(path.Base(d.SourceFile), path.Ext(d.SourceFile)) + "can"
-	// Remove illegal characters from package name
-	packageName = strings.ReplaceAll(packageName, ".", "")
-	packageName = strings.ReplaceAll(packageName, "-", "")
-	packageName = strings.ReplaceAll(packageName, "_", "")
-	f.P("// Package ", packageName, " provides primitives for encoding and decoding ", d.Name(), " CAN messages.")
+	f.P("// Package ", d.PackageName, " provides primitives for encoding and decoding ", d.Name(), " CAN messages.")
 	f.P("//")
 	f.P("// Source: ", d.SourceFile)
-	f.P("package ", packageName)
+	f.P("package ", d.PackageName)
 	f.P()
 }
 
